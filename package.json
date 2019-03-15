@@ -1,6 +1,7 @@
 {
   "name": "typed-sql-builder",
   "version": "1.0.0",
+  "description": "Build SQL statement from Typescript",
   "keywords": [],
   "author": "Beeno Tung <aabbcc1241@yahoo.com.hk> (https://beeno-tung.surge.sh)",
   "license": "BSD-2-Clause",
@@ -46,6 +47,5 @@
   "bugs": {
     "url": "https://github.com/beenotung/sql-builder/issues"
   },
-  "homepage": "https://github.com/beenotung/sql-builder#readme",
-  "description": ""
+  "homepage": "https://github.com/beenotung/sql-builder#readme"
 }
