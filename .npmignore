@@ -2,3 +2,10 @@
 .idea/
 tsconfig.json
 tslint.json
+
+res/
+test/
+src/
+.prettierrc
+.editorconfig
+*.tgz
