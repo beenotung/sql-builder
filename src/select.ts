@@ -1,14 +1,23 @@
 import { SqlBuilder } from './core';
 
-export type SqlSelectorOpType = '=';
+export type SqlSelectorOpType = '=' | '<>' | '<' | '>' | '>=' | '<=';
 
-export interface SqlSelector<T, P extends keyof T> {
+export interface SqlOpSelector<T, P extends keyof T = keyof T> {
   field: P;
   op: SqlSelectorOpType;
   value: T[P];
 }
 
-export function sqlSelector<T, P extends keyof T>(
+export interface SqlInSelector<T, P extends keyof T = keyof T> {
+  field: P;
+  in: Array<T[P]>;
+}
+
+export type SqlSelector<T, P extends keyof T = keyof T> =
+  | SqlOpSelector<T, P>
+  | SqlInSelector<T, P>;
+
+export function sqlSelector<T, P extends keyof T = keyof T>(
   field: P,
   op: SqlSelectorOpType,
   value: T[P],
@@ -27,10 +36,34 @@ export function mkSqlSelectors<T>(
   }));
 }
 
+export function ensureMkSqlSelectors<T>(
+  partial: Partial<T>,
+  op: SqlSelectorOpType = '=',
+): [SqlSelector<T>, ...Array<SqlSelector<T>>] {
+  const keys = Object.keys(partial);
+  if (keys.length === 0) {
+    throw new Error('expect at least one field');
+  }
+  return (keys.map(key => ({
+    field: key as keyof T,
+    op,
+    value: partial[key],
+  })) as Array<SqlSelector<T>>) as any;
+}
+
 function sqlSelectorToString(selector: SqlSelector<any, any>): string {
   const field = '`' + selector.field + '`';
-  const value: string = JSON.stringify(selector.value);
-  return `${field} ${selector.op} ${value}`;
+  if ('op' in selector) {
+    const value: string = JSON.stringify(selector.value);
+    return `${field} ${selector.op} ${value}`;
+  }
+  if ('in' in selector) {
+    let sql = `${field} in (`;
+    sql += selector.in.map(x => JSON.stringify(x)).join(', ');
+    return sql + ')';
+  }
+  console.error('unknown type of selector:', selector);
+  throw new Error('not_impl');
 }
 
 export class SqlWhere<T> implements SqlBuilder {
@@ -49,20 +82,56 @@ export class SqlWhere<T> implements SqlBuilder {
     return o;
   }
 
-  and<P extends keyof T>(selector: SqlSelector<T, P>): SqlWhere<T> {
+  and(selector: SqlSelector<T, keyof T>): SqlWhere<T> {
     const o = this.clone();
     o.whereStr = `(${this.whereStr} AND ${sqlSelectorToString(selector)})`;
     return o;
   }
 
-  or<P extends keyof T>(selector: SqlSelector<T, P>): SqlWhere<T> {
+  andAll(selectors: Array<SqlSelector<T>>): SqlWhere<T> {
+    return selectors.reduce((acc, c) => acc.and(c), this);
+  }
+
+  or(selector: SqlSelector<T, keyof T>): SqlWhere<T> {
     const o = this.clone();
     o.whereStr = `(${this.whereStr} OR ${sqlSelectorToString(selector)})`;
     return o;
   }
 
+  orAll(selectors: Array<SqlSelector<T>>): SqlWhere<T> {
+    return selectors.reduce((acc, c) => acc.and(c), this);
+  }
+
   toSqlString(): string {
     return this.whereStr;
+  }
+}
+
+export function andAll<T>(
+  selector: SqlSelector<T>,
+  ...selectors: Array<SqlSelector<T>>
+) {
+  return new SqlWhere(selector).andAll(selectors);
+}
+
+export function orAll<T>(
+  selector: SqlSelector<T>,
+  ...selectors: Array<SqlSelector<T>>
+) {
+  return new SqlWhere(selector).orAll(selectors);
+}
+
+export function whereAll<T>(
+  op: 'and' | 'or',
+  selector: SqlSelector<T>,
+  ...selectors: Array<SqlSelector<T>>
+) {
+  if (op === 'and') {
+    return andAll(selector, ...selectors);
+  } else if (op === 'or') {
+    return orAll(selector, ...selectors);
+  } else {
+    throw new Error('unknown op: ' + op);
   }
 }
 
@@ -96,6 +165,12 @@ export class SelectSqlBuilder<T> implements SqlBuilder {
   selectFields<K extends keyof T>(fields: K[]): SelectSqlBuilder<Pick<T, K>> {
     const o = this.clone();
     o.selects.push(...fields);
+    return o;
+  }
+
+  setWhere(where: SqlWhere<T>): SelectSqlBuilder<T> {
+    const o = this.clone();
+    o.where = where;
     return o;
   }
 

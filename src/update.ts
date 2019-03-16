@@ -36,6 +36,11 @@ export class UpdateSqlBuilder<T> implements SqlBuilder {
     return o;
   }
 
+  setWhere(where: SqlWhere<T>): UpdateSqlBuilder<T> {
+    const o = this.clone();
+    o.where = where;
+    return o;
+  }
   and<P extends keyof T>(selector: SqlSelector<T, P>): UpdateSqlBuilder<T> {
     const o = this.clone();
     if (o.where) {
