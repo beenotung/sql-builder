@@ -1,9 +1,22 @@
 import { SqlBuilder } from './core';
 
+export type SqlSelectorOpType = '=';
+
 export interface SqlSelector<T, P extends keyof T> {
   field: P;
-  op: '=';
+  op: SqlSelectorOpType;
   value: T[P];
+}
+
+export function mkSqlSelectors<T>(
+  partial: Partial<T>,
+  op: SqlSelectorOpType = '=',
+): Array<SqlSelector<T, keyof T>> {
+  return Object.keys(partial).map(key => ({
+    field: key as keyof T,
+    op,
+    value: partial[key],
+  }));
 }
 
 function sqlSelectorToString(selector: SqlSelector<any, any>): string {
