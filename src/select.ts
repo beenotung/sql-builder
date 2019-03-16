@@ -8,6 +8,14 @@ export interface SqlSelector<T, P extends keyof T> {
   value: T[P];
 }
 
+export function sqlSelector<T, P extends keyof T>(
+  field: P,
+  op: SqlSelectorOpType,
+  value: T[P],
+): SqlSelector<T, P> {
+  return { field, op, value };
+}
+
 export function mkSqlSelectors<T>(
   partial: Partial<T>,
   op: SqlSelectorOpType = '=',
