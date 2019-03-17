@@ -194,6 +194,14 @@ export class SelectSqlBuilder<T> implements SqlBuilder {
     return o;
   }
 
+  andAll(selectors: Array<SqlSelector<T>>): SelectSqlBuilder<T> {
+    return selectors.reduce((acc, c) => acc.and(c), this);
+  }
+
+  orAll(selectors: Array<SqlSelector<T>>): SelectSqlBuilder<T> {
+    return selectors.reduce((acc, c) => acc.or(c), this);
+  }
+
   toSqlString(): string {
     let sql = `SELECT `;
     if (this.selects.length === 0) {

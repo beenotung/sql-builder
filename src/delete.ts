@@ -36,10 +36,6 @@ export class DeleteSqlBuilder<T> implements SqlBuilder {
     return o;
   }
 
-  andAll(selectors: Array<SqlSelector<T>>): DeleteSqlBuilder<T> {
-    return selectors.reduce((acc, c) => acc.and(c), this);
-  }
-
   or<P extends keyof T>(selector: SqlSelector<T, P>): DeleteSqlBuilder<T> {
     const o = this.clone();
     if (o.where) {
@@ -48,6 +44,10 @@ export class DeleteSqlBuilder<T> implements SqlBuilder {
       o.where = new SqlWhere<T>(selector);
     }
     return o;
+  }
+
+  andAll(selectors: Array<SqlSelector<T>>): DeleteSqlBuilder<T> {
+    return selectors.reduce((acc, c) => acc.and(c), this);
   }
 
   orAll(selectors: Array<SqlSelector<T>>): DeleteSqlBuilder<T> {

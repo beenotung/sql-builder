@@ -41,6 +41,7 @@ export class UpdateSqlBuilder<T> implements SqlBuilder {
     o.where = where;
     return o;
   }
+
   and<P extends keyof T>(selector: SqlSelector<T, P>): UpdateSqlBuilder<T> {
     const o = this.clone();
     if (o.where) {
@@ -59,6 +60,14 @@ export class UpdateSqlBuilder<T> implements SqlBuilder {
       o.where = new SqlWhere<T>(selector);
     }
     return o;
+  }
+
+  andAll(selectors: Array<SqlSelector<T>>): UpdateSqlBuilder<T> {
+    return selectors.reduce((acc, c) => acc.and(c), this);
+  }
+
+  orAll(selectors: Array<SqlSelector<T>>): UpdateSqlBuilder<T> {
+    return selectors.reduce((acc, c) => acc.or(c), this);
   }
 
   toSqlString(): string {
