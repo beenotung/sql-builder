@@ -32,18 +32,22 @@ export function mkSqlSelectors<T>(
   partial: Partial<T>,
   op: SqlSelectorOpType = '=',
 ): Array<SqlSelector<T, keyof T>> {
-  return Object.keys(partial).map(key => ({
-    field: key as keyof T,
-    op,
-    value: partial[key],
-  }));
+  return Object.keys(partial)
+    .filter(field => partial[field] !== undefined)
+    .map(field => ({
+      field: field as keyof T,
+      op,
+      value: partial[field],
+    }));
 }
 
 export function ensureMkSqlSelectors<T>(
   partial: Partial<T>,
   op: SqlSelectorOpType = '=',
 ): [SqlSelector<T>, ...Array<SqlSelector<T>>] {
-  const keys = Object.keys(partial);
+  const keys = Object.keys(partial).filter(
+    field => partial[field] !== undefined,
+  );
   if (keys.length === 0) {
     throw new Error('expect at least one field');
   }

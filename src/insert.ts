@@ -1,6 +1,7 @@
 import { Connection } from 'promise-mysql';
 import { SqlBuilder } from './core';
 import { OkPacket, toPromise } from './lib';
+import { flatten } from './utils';
 
 export class InsertSqlBuilder<T> implements SqlBuilder {
   tableName: string;
@@ -21,7 +22,7 @@ export class InsertSqlBuilder<T> implements SqlBuilder {
 
   insert<R extends Partial<T>>(record: R): InsertSqlBuilder<R> {
     const o = this.clone();
-    o.records.push();
+    o.records.push(record);
     return o;
   }
 
@@ -35,24 +36,24 @@ export class InsertSqlBuilder<T> implements SqlBuilder {
     if (this.records.length === 0) {
       return '';
     }
-    const fields = new Set<string>();
-    this.records.forEach(record =>
-      Object.keys(record).forEach(s => fields.add(s)),
+    const fields: string[] = flatten(
+      this.records.map(record =>
+        Object.keys(record).filter(field => record[field] !== undefined),
+      ),
     );
-    const fs = Array.from(fields);
 
     let sql = `INSERT INTO \`${this.tableName}\` (`;
-    sql += fs.map(s => '`' + s + '`').join(', ');
+    sql += fields.map(s => '`' + s + '`').join(', ');
     sql += ') VALUES\n';
     sql += this.records
       .map(record =>
-        fs
+        fields
           .map(field => {
             let value = record[field];
-            if (!(field in record)) {
-              value = 'null';
+            if (value === undefined) {
+              value = null;
             }
-            return value;
+            return JSON.stringify(value);
           })
           .join(', '),
       )

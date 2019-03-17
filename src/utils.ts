@@ -23,3 +23,12 @@ export function fieldToSql<T>(field: Field<T>): string {
   }
   return `\`${field}\``;
 }
+
+/**
+ * only flatten one level
+ * */
+export function flatten<A>(xss: A[][]): A[] {
+  const ys: A[] = [];
+  xss.forEach(xs => ys.push(...xs));
+  return ys;
+}
