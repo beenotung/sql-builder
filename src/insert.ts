@@ -36,9 +36,13 @@ export class InsertSqlBuilder<T> implements SqlBuilder {
     if (this.records.length === 0) {
       return '';
     }
-    const fields: string[] = flatten(
-      this.records.map(record =>
-        Object.keys(record).filter(field => record[field] !== undefined),
+    const fields: string[] = Array.from(
+      new Set(
+        flatten(
+          this.records.map(record =>
+            Object.keys(record).filter(field => record[field] !== undefined),
+          ),
+        ),
       ),
     );
 
