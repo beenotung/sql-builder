@@ -1,4 +1,7 @@
+import { Connection } from 'promise-mysql';
 import { SqlBuilder } from './core';
+import { toPromise } from './lib';
+import { Field, fieldToSql } from './utils';
 
 export type SqlSelectorOpType = '=' | '<>' | '<' | '>' | '>=' | '<=';
 
@@ -135,9 +138,25 @@ export function whereAll<T>(
   }
 }
 
+export type SqlSelectFuncType = 'SUM' | 'COUNT' | 'AVG' | 'MAX' | 'MIN';
+
+export interface SqlFuncSelector<T> {
+  func: SqlSelectFuncType;
+  field: '*' | (string & keyof T);
+  as?: string;
+}
+
+function funcToSql<K extends string>(
+  func: SqlSelectFuncType,
+  field: Field<any>,
+): K {
+  const s = `${func}(${fieldToSql(field)})`;
+  return s as K;
+}
+
 export class SelectSqlBuilder<T> implements SqlBuilder {
   tableName: string;
-  selects: Array<keyof T> = [];
+  selects: string[] = [];
   where: SqlWhere<T>;
 
   clone(): SelectSqlBuilder<T> {
@@ -156,15 +175,38 @@ export class SelectSqlBuilder<T> implements SqlBuilder {
     return o;
   }
 
-  select(field: keyof T): SelectSqlBuilder<T> {
+  select<K extends keyof T>(field: K): SelectSqlBuilder<Pick<T, K>> {
     const o = this.clone();
-    o.selects.push(field);
+    o.selects = ['`' + field + '`'];
     return o;
   }
 
   selectFields<K extends keyof T>(fields: K[]): SelectSqlBuilder<Pick<T, K>> {
     const o = this.clone();
-    o.selects.push(...fields);
+    o.selects = fields.map(s => '`' + s + '`');
+    return o;
+  }
+
+  selectWithFunction<K extends string, R = number>(
+    func: SqlSelectFuncType,
+    field: Field<T>,
+    as: K = funcToSql(func, field),
+  ): SelectSqlBuilder<Record<K, R>> {
+    const o: SelectSqlBuilder<Record<K, R>> = this.clone() as SelectSqlBuilder<
+      any
+    >;
+    o.selects = [`${funcToSql(func, field)} as ${as}`];
+    return o;
+  }
+
+  selectFieldsWithFunctions<K extends keyof T>(
+    selectors: Array<SqlFuncSelector<T>>,
+  ): SelectSqlBuilder<Pick<T, K>> {
+    const o = this.clone();
+    o.selects = selectors.map(x => {
+      const as = x.as || funcToSql(x.func, x.field);
+      return `${funcToSql(x.func, x.field)} as ${as}`;
+    });
     return o;
   }
 
@@ -207,7 +249,7 @@ export class SelectSqlBuilder<T> implements SqlBuilder {
     if (this.selects.length === 0) {
       sql += '*';
     } else {
-      sql += this.selects.map(s => '`' + s + '`').join(', ');
+      sql += this.selects.join(', ');
     }
     sql += ` FROM \`${this.tableName}\``;
     if (this.where) {
@@ -215,8 +257,12 @@ export class SelectSqlBuilder<T> implements SqlBuilder {
     }
     return sql + ';';
   }
+
+  query(conn: Connection): Promise<T[]> {
+    return toPromise(conn.query(this.toSqlString()));
+  }
 }
 
 export function selectTable<T>(tableName: string): SelectSqlBuilder<T> {
-  return new SelectSqlBuilder().setTableName(tableName);
+  return new SelectSqlBuilder<T>().setTableName(tableName);
 }

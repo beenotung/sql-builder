@@ -14,3 +14,12 @@ export function timeToSql(time: number | Date): string {
     .slice(0, 19)
     .replace('T', ' ');
 }
+
+export type Field<T> = '*' | (string & keyof T);
+
+export function fieldToSql<T>(field: Field<T>): string {
+  if (field === '*') {
+    return '*';
+  }
+  return `\`${field}\``;
+}
