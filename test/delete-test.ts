@@ -1,18 +1,26 @@
-import { ranking } from './ranking.types';
-import { andAll, ensureMkSqlSelectors, sqlSelector } from '../src/select';
+import { mkSqlSelectors, sqlSelector } from '../src/select';
 import { deleteTable } from '../src/delete';
+import { createConnection } from './db';
+import { transaction } from './transaction';
 
-let deleteSql = deleteTable<ranking>('ranking')
-  .setWhere(
-    andAll(
-      ...ensureMkSqlSelectors<ranking>({
-        raw_id: 1,
-        user_id: 2,
-        step: 3,
-      }),
-    ),
+let deleteQuery = deleteTable<transaction>('transaction')
+  .andAll(
+    mkSqlSelectors({
+      raw_id: 4,
+      sender_user_id: 2,
+    }),
   )
-  .and(sqlSelector('score', '=', 1))
-  .and(sqlSelector('rank', '=', 2))
-  .toSqlString();
-console.log(deleteSql);
+  .and(sqlSelector('fee', '=', 3));
+console.log(deleteQuery.toSqlString());
+
+async function test() {
+  let conn = await createConnection();
+  try {
+    let res = await deleteQuery.query(conn);
+    console.log('delete res:', res);
+  } finally {
+    conn.end();
+  }
+}
+
+test();

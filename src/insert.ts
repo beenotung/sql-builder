@@ -1,4 +1,6 @@
+import { Connection } from 'promise-mysql';
 import { SqlBuilder } from './core';
+import { OkPacket, toPromise } from './lib';
 
 export class InsertSqlBuilder<T> implements SqlBuilder {
   tableName: string;
@@ -57,6 +59,10 @@ export class InsertSqlBuilder<T> implements SqlBuilder {
       .map(s => '(' + s + ')')
       .join(',\n');
     return sql + ';';
+  }
+
+  query(conn: Connection): Promise<OkPacket> {
+    return toPromise(conn.query(this.toSqlString()));
   }
 }
 

@@ -1,4 +1,6 @@
+import { Connection } from 'promise-mysql';
 import { SqlBuilder } from './core';
+import { OkPacket, toPromise } from './lib';
 import { SqlSelector, SqlWhere } from './select';
 
 export interface SqlSet<T, P extends keyof T> {
@@ -12,7 +14,7 @@ export class UpdateSqlBuilder<T> implements SqlBuilder {
   where: SqlWhere<T>;
 
   clone(): UpdateSqlBuilder<T> {
-    const o = new UpdateSqlBuilder();
+    const o = new UpdateSqlBuilder<T>();
     o.tableName = this.tableName;
     o.updateFields = this.updateFields.map(x => x as any);
     if (this.where) {
@@ -84,6 +86,10 @@ export class UpdateSqlBuilder<T> implements SqlBuilder {
       sql += ' WHERE ' + this.where.toSqlString();
     }
     return sql + ';';
+  }
+
+  query(conn: Connection): Promise<OkPacket> {
+    return toPromise(conn.query(this.toSqlString()));
   }
 }
 
