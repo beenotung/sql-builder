@@ -9,3 +9,5 @@ src/
 .prettierrc
 .editorconfig
 *.tgz
+
+pnpm-lock.yaml
