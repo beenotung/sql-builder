@@ -48,11 +48,15 @@ export class DeleteSqlBuilder<T> implements SqlBuilder {
     return o;
   }
 
-  andAll<P extends keyof T>(selectors: Array<SqlSelector<T, P>>): DeleteSqlBuilder<T> {
+  andAll<P extends keyof T>(
+    selectors: Array<SqlSelector<T, P>>,
+  ): DeleteSqlBuilder<T> {
     return selectors.reduce((acc, c) => acc.and(c), this);
   }
 
-  orAll<P extends keyof T>(selectors: Array<SqlSelector<T, P>>): DeleteSqlBuilder<T> {
+  orAll<P extends keyof T>(
+    selectors: Array<SqlSelector<T, P>>,
+  ): DeleteSqlBuilder<T> {
     return selectors.reduce((acc, c) => acc.or(c), this);
   }
 
