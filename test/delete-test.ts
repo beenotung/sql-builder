@@ -5,7 +5,7 @@ import { transaction } from './transaction';
 
 let deleteQuery = deleteTable<transaction>('transaction')
   .andAll(
-    mkSqlSelectors({
+    mkSqlSelectors<transaction>({
       raw_id: 4,
       sender_user_id: 2,
     }),

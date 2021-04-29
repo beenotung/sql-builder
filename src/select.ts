@@ -182,13 +182,13 @@ export class SelectSqlBuilder<T> implements SqlBuilder {
   select<K extends keyof T>(field: K): SelectSqlBuilder<Pick<T, K>> {
     const o = this.clone();
     o.selects = ['`' + field + '`'];
-    return o;
+    return o as any;
   }
 
   selectFields<K extends keyof T>(fields: K[]): SelectSqlBuilder<Pick<T, K>> {
     const o = this.clone();
     o.selects = fields.map(s => '`' + s + '`');
-    return o;
+    return o as any;
   }
 
   selectWithFunction<K extends string, R = number>(
@@ -211,7 +211,7 @@ export class SelectSqlBuilder<T> implements SqlBuilder {
       const as = x.as || funcToSql(x.func, x.field);
       return `${funcToSql(x.func, x.field)} as ${as}`;
     });
-    return o;
+    return o as any;
   }
 
   setWhere(where: SqlWhere<T>): SelectSqlBuilder<T> {
