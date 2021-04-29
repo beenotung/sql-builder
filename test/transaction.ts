@@ -1,4 +1,4 @@
-import { datetime, int } from './sql.types';
+import { datetime, int } from './types';
 
 export interface transaction {
   raw_id: int;
